@@ -11,9 +11,9 @@ from pipecat.processors.aggregators.openai_llm_context import OpenAILLMContext
 from pipecat.runner.types import RunnerArguments
 from pipecat.runner.utils import parse_telephony_websocket
 from pipecat.serializers.exotel import ExotelFrameSerializer
-from pipecat.services.cartesia.tts import CartesiaTTSService
+from pipecat.services.sarvam.tts import SarvamTTSService
 from pipecat.services.deepgram.stt import DeepgramSTTService
-from pipecat.services.openai.llm import OpenAILLMService
+from sarvam_llm import SarvamLLMService
 from pipecat.transports.base_transport import BaseTransport
 from pipecat.transports.websocket.fastapi import (
     FastAPIWebsocketParams,
@@ -24,13 +24,14 @@ load_dotenv(override=True)
 
 
 async def run_bot(transport: BaseTransport, handle_sigint: bool):
-    llm = OpenAILLMService(api_key=os.getenv("OPENAI_API_KEY"))
+    llm = SarvamLLMService()
 
     stt = DeepgramSTTService(api_key=os.getenv("DEEPGRAM_API_KEY"))
 
-    tts = CartesiaTTSService(
-        api_key=os.getenv("CARTESIA_API_KEY"),
-        voice_id="71a7ad14-091c-4e8e-a314-022ece01c121",  # British Reading Lady
+    tts = SarvamTTSService(
+        api_key=os.getenv("SARVAM_API_KEY"),
+        model="bulbul:v2",
+        voice_id="anushka",
     )
 
     messages = [
@@ -40,7 +41,7 @@ async def run_bot(transport: BaseTransport, handle_sigint: bool):
                 "You are a friendly assistant. "
                 "Your responses will be read aloud, so keep them concise and conversational. "
                 "Avoid special characters or formatting. "
-                "Begin by saying: 'Hello! This is an automated call from our Exotel chatbot demo.' "
+                "Begin by saying: 'Hello! how can i help you today' "
             ),
         },
     ]
@@ -50,12 +51,12 @@ async def run_bot(transport: BaseTransport, handle_sigint: bool):
 
     pipeline = Pipeline(
         [
-            transport.input(),  # Websocket input from client
-            stt,  # Speech-To-Text
+            transport.input(),
+            stt,
             context_aggregator.user(),
-            llm,  # LLM
-            tts,  # Text-To-Speech
-            transport.output(),  # Websocket output to client
+            llm,
+            tts,
+            transport.output(),
             context_aggregator.assistant(),
         ]
     )
