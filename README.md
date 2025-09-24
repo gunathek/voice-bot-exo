@@ -31,9 +31,7 @@ App Bazaar triggers → WebSocket connects → Customer called → Audio bridged
 
 ### AI Services
 
-- OpenAI API key for the LLM inference
-- Deepgram API key for speech-to-text
-- Cartesia API key for text-to-speech
+- Sarvam API key for LLM, speech-to-text, and text-to-speech integrations
 
 ### System
 
@@ -63,6 +61,11 @@ uv sync
 cp env.example .env
 # Edit .env with your API keys
 ```
+
+At minimum set `SARVAM_API_KEY`, which is reused for the LLM, STT, and TTS
+services. Optional variables such as `SARVAM_STT_LANGUAGE`,
+`SARVAM_STT_MODEL`, and `SARVAM_STT_EXTRA_PARAMS_JSON` let you customise the
+transcription behaviour Sarvam applies to each utterance.
 
 ## Environment Configuration
 

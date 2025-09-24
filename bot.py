@@ -12,8 +12,8 @@ from pipecat.runner.types import RunnerArguments
 from pipecat.runner.utils import parse_telephony_websocket
 from pipecat.serializers.exotel import ExotelFrameSerializer
 from pipecat.services.sarvam.tts import SarvamTTSService
-from pipecat.services.deepgram.stt import DeepgramSTTService
 from sarvam_llm import SarvamLLMService
+from sarvam_stt import SarvamSTTService
 from pipecat.transports.base_transport import BaseTransport
 from pipecat.transports.websocket.fastapi import (
     FastAPIWebsocketParams,
@@ -26,7 +26,7 @@ load_dotenv(override=True)
 async def run_bot(transport: BaseTransport, handle_sigint: bool):
     llm = SarvamLLMService()
 
-    stt = DeepgramSTTService(api_key=os.getenv("DEEPGRAM_API_KEY"))
+    stt = SarvamSTTService()
 
     tts = SarvamTTSService(
         api_key=os.getenv("SARVAM_API_KEY"),
