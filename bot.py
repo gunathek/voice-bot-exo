@@ -22,6 +22,11 @@ from pipecat.transports.websocket.fastapi import (
 
 load_dotenv(override=True)
 
+base_dir = os.path.dirname(__file__)
+prompt_path = os.path.join(base_dir, "prompts", "system_prompt.md")
+with open(prompt_path, "r", encoding="utf-8") as f:
+    system_prompt = f.read().strip()
+
 
 async def run_bot(transport: BaseTransport, handle_sigint: bool):
     llm = SarvamLLMService()
@@ -37,12 +42,7 @@ async def run_bot(transport: BaseTransport, handle_sigint: bool):
     messages = [
         {
             "role": "system",
-            "content": (
-                "You are a friendly assistant. "
-                "Your responses will be read aloud, so keep them concise and conversational. "
-                "Avoid special characters or formatting. "
-                "Begin by saying: 'Hello! how can i help you today' "
-            ),
+            "content": system_prompt,
         },
     ]
 
