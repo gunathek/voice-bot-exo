@@ -67,6 +67,32 @@ services. Optional variables such as `SARVAM_STT_LANGUAGE`,
 `SARVAM_STT_MODEL`, and `SARVAM_STT_EXTRA_PARAMS_JSON` let you customise the
 transcription behaviour Sarvam applies to each utterance.
 
+## Sentry Metrics (optional)
+
+The bot can emit Time-To-First-Byte and processing duration metrics for every
+Pipecat processor via [Sentry](https://sentry.io/).
+
+1. Install the Sentry extras (already declared in `pyproject.toml`). If you
+   updated an existing environment run `uv sync` to pull the new dependency set.
+2. Leave `SENTRY_METRICS_ENABLED=true` (default) to activate the integration.
+3. Provide your Sentry configuration in `.env`:
+
+   ```env
+   SENTRY_DSN=your-project-dsn
+   # Optional overrides
+   SENTRY_TRACES_SAMPLE_RATE=0.2
+   SENTRY_PROFILES_SAMPLE_RATE=0.1
+   SENTRY_ENVIRONMENT=production
+   SENTRY_RELEASE=voice-bot@0.1.0
+   ```
+
+With `SENTRY_DSN` set, the bot initialises the Sentry SDK and attaches
+`SentryMetrics` to the Sarvam LLM, STT, and TTS services. Metrics appear in the
+Performance section of your Sentry project alongside any captured exceptions.
+
+Set `SENTRY_METRICS_ENABLED=false` (or `0`, `no`, `off`) to disable the integration
+without removing your DSN.
+
 ## Environment Configuration
 
 The bot supports two deployment modes controlled by the `ENV` variable:
