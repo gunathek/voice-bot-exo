@@ -35,12 +35,22 @@ _SENTRY_SETUP_ATTEMPTED = False
 _SENTRY_METRICS_CLASS: Optional[Type["SentryMetrics"]] = None
 
 
-def _is_sentry_enabled() -> bool:
-    raw_value = os.getenv("SENTRY_METRICS_ENABLED")
+def _env_flag_enabled(env_name: str, *, default: bool = False) -> bool:
+    raw_value = os.getenv(env_name)
     if raw_value is None:
-        return True
+        return default
     normalized = raw_value.strip().lower()
-    return normalized in {"1", "true", "yes", "on"}
+    if not normalized:
+        return default
+    if normalized in {"1", "true", "yes", "on"}:
+        return True
+    if normalized in {"0", "false", "no", "off"}:
+        return False
+    return default
+
+
+def _is_sentry_enabled() -> bool:
+    return _env_flag_enabled("SENTRY_METRICS_ENABLED", default=True)
 
 
 def _parse_sample_rate(env_name: str, default: Optional[float] = None) -> Optional[float]:
@@ -113,6 +123,32 @@ def _create_sentry_metrics_instance() -> Optional["SentryMetrics"]:
     return metrics_class()
 
 
+IS_TRACING_ENABLED = _env_flag_enabled("ENABLE_TRACING")
+
+if IS_TRACING_ENABLED:
+    try:
+        from opentelemetry.exporter.otlp.proto.http.trace_exporter import OTLPSpanExporter
+        from pipecat.utils.tracing.setup import setup_tracing
+
+        otlp_exporter = OTLPSpanExporter()
+        setup_tracing(
+            service_name=os.getenv("OTEL_SERVICE_NAME", "voice-bot-pipecat"),
+            exporter=otlp_exporter,
+            console_export=_env_flag_enabled("OTEL_CONSOLE_EXPORT"),
+        )
+        logger.info("OpenTelemetry tracing enabled for Langfuse exporter")
+    except ModuleNotFoundError as exc:  # pragma: no cover - runtime guard
+        IS_TRACING_ENABLED = False
+        logger.warning(
+            "ENABLE_TRACING is set but OpenTelemetry extras are missing: {}. Run `uv sync` to "
+            "install updated dependencies.",
+            exc,
+        )
+    except Exception as exc:  # pragma: no cover - runtime guard
+        IS_TRACING_ENABLED = False
+        logger.warning(f"Failed to initialize OpenTelemetry tracing: {exc}")
+
+
 async def run_bot(transport: BaseTransport, handle_sigint: bool):
     llm_metrics = _create_sentry_metrics_instance()
     stt_metrics = _create_sentry_metrics_instance()
@@ -163,6 +199,7 @@ async def run_bot(transport: BaseTransport, handle_sigint: bool):
             enable_metrics=True,
             enable_usage_metrics=True,
         ),
+        enable_tracing=IS_TRACING_ENABLED,
     )
 
     @transport.event_handler("on_client_connected")

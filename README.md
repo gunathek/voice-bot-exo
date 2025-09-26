@@ -93,6 +93,34 @@ Performance section of your Sentry project alongside any captured exceptions.
 Set `SENTRY_METRICS_ENABLED=false` (or `0`, `no`, `off`) to disable the integration
 without removing your DSN.
 
+## Langfuse Tracing (optional)
+
+Pipecat pipelines can stream OpenTelemetry traces to
+[Langfuse](https://langfuse.com) for detailed observability.
+
+1. Base64 encode your Langfuse public and secret keys (`pk:sk`):
+
+   ```bash
+   echo -n "pk-lf-1234:sk-lf-5678" | base64
+   ```
+
+2. Update `.env` with the tracing configuration:
+
+   ```env
+   ENABLE_TRACING=true
+   OTEL_EXPORTER_OTLP_ENDPOINT=https://cloud.langfuse.com/api/public/otel
+   OTEL_EXPORTER_OTLP_HEADERS=Authorization=Basic%20<base64_public_colon_secret>
+   # Optional overrides
+   # OTEL_SERVICE_NAME=voice-bot-pipecat
+   # OTEL_CONSOLE_EXPORT=true
+   ```
+
+3. Start the bot as usual. When tracing is enabled the server initialises the
+   OTLP HTTP exporter and Pipecat emits spans for each pipeline component.
+
+If traces do not appear in Langfuse, verify the encoded credentials and that
+your network can reach the configured OTLP endpoint.
+
 ## Environment Configuration
 
 The bot supports two deployment modes controlled by the `ENV` variable:
